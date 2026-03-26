@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>De l’absence à la présence</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Georgia, serif;
+      background: #f8f7f4;
+      color: #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      padding: 2rem;
+    }
+
+    /* Sélecteur de langue */
+    .lang-switch {
+      margin-bottom: 2.5rem;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1rem;
+    }
+
+    .lang-switch button {
+      background: none;
+      border: none;
+      color: #aaa;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.3s;
+      padding: 0 8px;
+    }
+
+    .lang-switch button.active {
+      color: #2f5d50;
+      font-weight: bold;
+    }
+
+    .separator { color: #ddd; }
+
+    /* Contenu */
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      color: #2f5d50;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      font-style: italic;
+      margin-bottom: 0.4rem;
+      color: #444;
+    }
+
+    .description {
+      color: #666;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .quote {
+      margin: 2rem 0;
+      font-size: 1.1rem;
+      color: #333;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 1.4rem;
+      background: #2f5d50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.3s;
+      font-size: 1rem;
+    }
+
+    .btn:hover { background: #1e3d34; }
+
+    /* Animations de transition */
+    .lang-content { animation: fadeIn 0.6s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="lang-switch">
+      <button onclick="setLanguage('fr')" id="sw-fr">Français</button> 
+      <span class="separator">|</span> 
+      <button onclick="setLanguage('en')" id="sw-en">English</button>
+    </div>
+
+    <div id="content-fr" class="lang-content">
+      <h1>De l’absence<br>à la présence</h1>
+      <p class="subtitle">La métamorphose</p>
+      <p class="description">Comprendre le deuil et la transformation du lien</p>
+      <div class="quote">
+        <p>« Rien ne se perd,<br>tout se transforme. »</p>
+      </div>
+      <a href="livret-fr.pdf" id="btn-fr" class="btn" download>Télécharger le livret gratuit (PDF)</a>
+    </div>
+
+    <div id="content-en" class="lang-content" style="display:none;">
+      <h1>From Absence<br>to Presence</h1>
+      <p class="subtitle">The metamorphosis</p>
+      <p class="description">Understanding grief and the transformation of the bond</p>
+      <div class="quote">
+        <p>“Nothing is lost,<br>everything is transformed.”</p>
+      </div>
+      <a href="livret-en.pdf" id="btn-en" class="btn" download>Download the free booklet (PDF)</a>
+    </div>
+  </div>
+
+  <script>
+    // Configuration Analytics
+    const formID = "1FAIpQLSfU_UBfKrRXXMKuLN7K5rijdpWNDYKAl4Jn-_cBZZJB-_3tMQ";
+    const entryID = "entry.230800734";
+    // https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=155932398&single=true&output=csv
+
+    function setLanguage(lang) {
+      const isFr = (lang === 'fr');
+      
+      // Bascule visuelle des contenus
+      document.getElementById('content-fr').style.display = isFr ? 'block' : 'none';
+      document.getElementById('content-en').style.display = isFr ? 'none' : 'block';
+
+      // État du sélecteur
+      document.getElementById('sw-fr').className = isFr ? 'active' : '';
+      document.getElementById('sw-en').className = isFr ? '' : 'active';
+      
+      // Mise à jour de l'onglet navigateur
+      document.title = isFr ? "De l’absence à la présence" : "From Absence to Presence";
+    }
+
+    function track(lang) {
+      const url = `https://docs.google.com/forms/d/e/${formID}/formResponse?${entryID}=dl_${lang}&submit=Submit`;
+      navigator.sendBeacon(url);
+    }
+
+    // Événements de téléchargement
+    document.getElementById('btn-fr').addEventListener('click', () => track('fr'));
+    document.getElementById('btn-en').addEventListener('click', () => track('en'));
+
+    // Détection auto au démarrage (Locale navigateur)
+    window.addEventListener('DOMContentLoaded', () => {
+      const userLang = navigator.language || navigator.userLanguage;
+      const defaultLang = userLang.startsWith('fr') ? 'fr' : 'en';
+      setLanguage(defaultLang);
+    });
+  </script>
+
+</body>
+</html>
