@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Statistiques | Le Lien Transformé</title>
+    <style>
+      :root {
+        --primary-color: #333;
+        --accent-fr: #4a90e2;
+        --accent-en: #e67e22;
+        --bg-color: #f4f7f6;
+        --card-bg: #ffffff;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background-color: var(--bg-color);
+        color: var(--primary-color);
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      h1 {
+        font-weight: 300;
+        margin: 30px 0;
+        text-align: center;
+        font-size: 1.8rem;
+      }
+
+      /* --- LOADER --- */
+      #loader-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+      }
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-left-color: var(--accent-fr);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* --- CONTENU (Caché au départ) --- */
+      #stats-content {
+        display: none;
+        width: 100%;
+        max-width: 600px;
+      }
+
+      /* --- DASHBOARD --- */
+      .dashboard {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 2 colonnes sur desktop */
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+      .card {
+        background: var(--card-bg);
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+      .card.full {
+        grid-column: span 2;
+      } /* La carte Total prend toute la largeur */
+      .card h3 {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .card .value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 10px 0;
+        color: var(--primary-color);
+      }
+
+      /* --- GRAPHIQUE --- */
+      .chart-container {
+        background: var(--card-bg);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+      }
+      .bar-group {
+        margin-bottom: 20px;
+      }
+      .bar-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      .progress-bg {
+        background: #eee;
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        width: 0%;
+        transition: width 1.2s cubic-bezier(0.1, 0.5, 0.5, 1);
+      }
+      #fill-fr {
+        background: var(--accent-fr);
+      }
+      #fill-en {
+        background: var(--accent-en);
+      }
+
+      /* --- ACTIONS & FOOTER --- */
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .btn {
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        transition: 0.3s;
+        border: none;
+        cursor: pointer;
+      }
+      .btn-csv {
+        background: #e0e0e0;
+        color: #555;
+      }
+      .btn-csv:hover {
+        background: #d0d0d0;
+      }
+      .btn-back {
+        color: #888;
+        border-bottom: 1px solid transparent;
+        border-radius: 0;
+        padding: 5px;
+      }
+      .btn-back:hover {
+        border-bottom: 1px solid #ccc;
+      }
+
+      .footer {
+        font-size: 0.8rem;
+        color: #aaa;
+        margin-top: 30px;
+        text-align: center;
+        line-height: 1.5;
+      }
+
+      /* --- RESPONSIVE MOBILE --- */
+      @media (max-width: 480px) {
+        .dashboard {
+          grid-template-columns: 1fr;
+        } /* 1 seule colonne sur petit mobile */
+        .card.full {
+          grid-column: span 1;
+        }
+        h1 {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Données du Lien Transformé</h1>
+
+    <div id="loader-container">
+      <div class="spinner"></div>
+      <p id="loader-text">Analyse des flux...</p>
+    </div>
+
+    <div id="stats-content">
+      <div class="dashboard">
+        <div class="card">
+          <h3>Français</h3>
+          <div class="value" id="count-fr">0</div>
+        </div>
+        <div class="card">
+          <h3>Anglais</h3>
+          <div class="value" id="count-en">0</div>
+        </div>
+        <div class="card full">
+          <h3>Total des consultations</h3>
+          <div class="value" id="total">0</div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="bar-group">
+          <div class="bar-label">
+            <span>Part FR</span><span id="perc-fr">0%</span>
+          </div>
+          <div class="progress-bg">
+            <div id="fill-fr" class="progress-fill"></div>
+          </div>
+        </div>
+        <div class="bar-group">
+          <div class="bar-label">
+            <span>Part EN</span><span id="perc-en">0%</span>
+          </div>
+          <div class="progress-bg">
+            <div id="fill-en" class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="download-csv" class="btn btn-csv">
+          📥 Exporter les données brutes (CSV)
+        </button>
+        <a href="/" class="btn btn-back">Retour à l'accueil</a>
+      </div>
+
+      <div class="footer">
+        Dernier signal reçu le : <br />
+        <strong id="last-activity">...</strong>
+      </div>
+    </div>
+
+    <script>
+      const sheetCSVUrl =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=155932398&single=true&output=csv";
+      async function initStats() {
+        try {
+          const response = await fetch(sheetCSVUrl + "&nocache=" + Date.now());
+          const data = await response.text();
+          const lines = data.split("\n").filter((l) => l.trim() !== "");
+
+          let fr = 0,
+            en = 0,
+            last = "---";
+
+          for (let i = 1; i < lines.length; i++) {
+            if (lines[i].includes("dl_fr")) fr++;
+            if (lines[i].includes("dl_en")) en++;
+            if (i === lines.length - 1) last = lines[i].split(",")[0];
+          }
+
+          const total = fr + en;
+          const pFr = total > 0 ? Math.round((fr / total) * 100) : 0;
+          const pEn = total > 0 ? Math.round((en / total) * 100) : 0;
+
+          // Transition visuelle
+          document.getElementById("loader-container").style.display = "none";
+          const content = document.getElementById("stats-content");
+          content.style.display = "block";
+
+          // Maj data
+          document.getElementById("count-fr").innerText = fr;
+          document.getElementById("count-en").innerText = en;
+          document.getElementById("total").innerText = total;
+          document.getElementById("last-activity").innerText = last;
+
+          // Animation barres
+          setTimeout(() => {
+            document.getElementById("fill-fr").style.width = pFr + "%";
+            document.getElementById("fill-en").style.width = pEn + "%";
+            document.getElementById("perc-fr").innerText = pFr + "%";
+            document.getElementById("perc-en").innerText = pEn + "%";
+          }, 200);
+        } catch (e) {
+          document.getElementById("loader-text").innerText =
+            "Erreur de synchronisation.";
+          console.error(e);
+        }
+      }
+
+      document.getElementById("download-csv").onclick = () => {
+        const a = document.createElement("a");
+        a.href = sheetCSVUrl;
+        a.download = "stats.csv";
+        a.click();
+      };
+
+      initStats();
+    </script>
+  </body>
+</html>
