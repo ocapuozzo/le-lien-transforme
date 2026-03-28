@@ -153,12 +153,13 @@
         <div class="quote">
           <p>“Nothing is lost,<br />everything is transformed.”</p>
         </div>
+        <!-- booklet-the-transformed-link.pdf -->
         <a
-          href="booklet-the-transformed-link.pdf"
+          href="javascript: void(0);"
           id="btn-en"
           class="btn"
           download
-          >Download the free booklet (PDF)</a
+          >Download the free booklet (PDF) <br />(coming soon)</a
         >
       </div>
     </div>
@@ -238,9 +239,9 @@
       document
         .getElementById("btn-fr")
         .addEventListener("click", () => track("fr"));
-      document
-        .getElementById("btn-en")
-        .addEventListener("click", () => track("en"));
+     // document
+     //   .getElementById("btn-en")
+     //   .addEventListener("click", () => track("en"));
 
       // Détection auto au démarrage (Locale navigateur)
       window.addEventListener("DOMContentLoaded", () => {
