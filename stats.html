@@ -271,8 +271,8 @@
             }
           }
           const total = totalFR + totalEN;
-          const pFr = total > 0 ? Math.round((fr / total) * 100) : 0;
-          const pEn = total > 0 ? Math.round((en / total) * 100) : 0;
+          const pFr = total > 0 ? Math.round((totalFR / total) * 100) : 0;
+          const pEn = total > 0 ? Math.round((totalEN / total) * 100) : 0;
 
           // Transition visuelle
           document.getElementById("loader-container").style.display = "none";
