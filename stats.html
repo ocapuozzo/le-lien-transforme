@@ -250,17 +250,27 @@
           const data = await response.text();
           const lines = data.split("\n").filter((l) => l.trim() !== "");
 
-          let fr = 0,
-            en = 0,
-            last = "---";
+          let totalFR = 0;
+          let totalEN = 0;
+          let lastDate = "---";
 
-          for (let i = 1; i < lines.length; i++) {
-            if (lines[i].includes("dl_fr")) fr++;
-            if (lines[i].includes("dl_en")) en++;
-            if (i === lines.length - 1) last = lines[i].split(",")[0];
+          if (lines.length > 1) {
+            // --- ÉTAPE 1 : RÉCUPÉRER LE CUMUL (Ligne 2) ---
+            const cumulLine = lines[1].split(",");
+            // On suppose que le chiffre FR est en colonne 2 et EN en colonne 3
+            totalFR = parseInt(cumulLine[1]) || 0;
+            totalEN = parseInt(cumulLine[2]) || 0;
+            lastDate = cumulLine[0]; // Date de la dernière archive
+
+            for (let i = 1; i < lines.length; i++) {
+              if (lines[i].includes("dl_fr")) totalFR++;
+              if (lines[i].includes("dl_en")) totalEN++;
+              if (i === lines.length - 1) {
+                last = lines[i].split(",")[0];
+              } 
+            }
           }
-
-          const total = fr + en;
+          const total = totalFR + totalEN;
           const pFr = total > 0 ? Math.round((fr / total) * 100) : 0;
           const pEn = total > 0 ? Math.round((en / total) * 100) : 0;
 
@@ -270,8 +280,8 @@
           content.style.display = "block";
 
           // Maj data
-          document.getElementById("count-fr").innerText = fr;
-          document.getElementById("count-en").innerText = en;
+          document.getElementById("count-fr").innerText = totalFR;
+          document.getElementById("count-en").innerText = totalEN;
           document.getElementById("total").innerText = total;
           document.getElementById("last-activity").innerText = last;
 
