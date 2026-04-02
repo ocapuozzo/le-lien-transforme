@@ -226,6 +226,13 @@
             <div id="fill-en" class="progress-fill"></div>
           </div>
         </div>
+
+        <div class="chart-container">
+          <div class="stat-group">
+            <h3>Statistiques sur les 12 derniers mois</h3>
+            <div id="box-mois"></div>
+          </div>
+      
       </div>
 
       <div class="actions">
@@ -244,30 +251,52 @@
     <script>
       const sheetCSVUrl =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=155932398&single=true&output=csv";
+
+      const sheetCsvStat =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=748834337&single=true&output=csv";
+
       async function initStats() {
         try {
-          const response = await fetch(sheetCSVUrl + "&nocache=" + Date.now());
-          const data = await response.text();
-          const lines = data.split("\n").filter((l) => l.trim() !== "");
+          const responseCurrent = await fetch(
+            sheetCSVUrl + "&nocache=" + Date.now()
+          );
+          const data = await responseCurrent.text();
+          const currentLines = data.split("\n").filter((l) => l.trim() !== "");
 
-          let totalFR = 0;
-          let totalEN = 0;
+          const responseStats = await fetch(
+            sheetCsvStat + "&nocache=" + Date.now()
+          );
+          const data2 = await responseStats.text();
+          const currentStats = data2.split("\n").filter((l) => l.trim() !== "");
+
+          console.table(currentLines);
+          console.table(currentStats);
+
+          let cumulTotalFR = 0;
+          let cumulTotalEN = 0;
           let lastDate = "---";
 
-          if (lines.length > 1) {
-            // --- ÉTAPE 1 : RÉCUPÉRER LE CUMUL (Ligne 2) ---
-            const cumulLine = lines[1].split(",");
-            // On suppose que le chiffre FR est en colonne 2 et EN en colonne 3
-            totalFR = parseInt(cumulLine[1]) || 0;
-            totalEN = parseInt(cumulLine[2]) || 0;
-            lastDate = cumulLine[0]; // Date de la dernière archive
+          // --- ÉTAPE 1 : RÉCUPÉRER LE CUMUL (stats) ---
+          const statsFirstLine = currentStats[1].split(",");
+          // On suppose que le chiffre FR est en colonne 7 et EN en colonne 8
+          cumulTotalFR = parseInt(statsFirstLine[3]) || 0;
+          cumulTotalEN = parseInt(statsFirstLine[4]) || 0;
 
-            for (let i = 1; i < lines.length; i++) {
-              if (lines[i].includes("dl_fr")) totalFR++;
-              if (lines[i].includes("dl_en")) totalEN++;
-              if (i === lines.length - 1) {
-                last = lines[i].split(",")[0];
-              } 
+          let totalFR = cumulTotalFR;
+          let totalEN = cumulTotalEN;
+
+          // data-event start at number line d'index 2
+          if (currentLines.length > 1) {
+            // lastDate = cumulLine[16][0]; // Date de la dernière archive
+
+            // --- ÉTAPE 2 : RÉCUPÉRER LES EVTS DU JOUR NON ENCORE CUMULES DANS stats ---
+            // console.table(lines) line[i] n'est pas un tableau
+            for (let i = 15; i < currentLines.length; i++) {
+              if (currentLines[i].includes("dl_fr")) totalFR++;
+              if (currentLines[i].includes("dl_en")) totalEN++;
+              if (i === currentLines.length - 1) {
+                lastDate = currentLines[i].split(",")[0];
+              }
             }
           }
           const total = totalFR + totalEN;
@@ -283,7 +312,7 @@
           document.getElementById("count-fr").innerText = totalFR;
           document.getElementById("count-en").innerText = totalEN;
           document.getElementById("total").innerText = total;
-          document.getElementById("last-activity").innerText = last;
+          document.getElementById("last-activity").innerText = lastDate;
 
           // Animation barres
           setTimeout(() => {
