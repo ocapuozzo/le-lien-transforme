@@ -163,6 +163,70 @@
         border-bottom: 1px solid #ccc;
       }
 
+      .chart-wrapper {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        height: 200px; /* Hauteur max du graphique */
+        padding: 20px 0 40px 0;
+        border-bottom: 2px solid var(--primary-color);
+        position: relative;
+        gap: 4px;
+      }
+
+      .month-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        justify-content: flex-end;
+        position: relative;
+      }
+
+      .bars-container {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        width: 100%;
+        height: 100%;
+      }
+
+      .v-bar {
+        flex: 1;
+        min-width: 4px;
+        transition: height 0.6s ease-out;
+        border-radius: 2px 2px 0 0;
+      }
+
+      .v-bar.fr {
+        background-color: var(--accent-fr);
+      }
+      .v-bar.en {
+        background-color: var(--accent-en);
+      }
+
+      .month-label {
+        position: absolute;
+        bottom: -25px;
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        transform: rotate(-45deg);
+      }
+
+      /* Tooltip simple au survol */
+      .v-bar:hover::after {
+        content: attr(data-value);
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 10px;
+        background: var(--primary-color);
+        color: #fff;
+        padding: 2px 4px;
+        border-radius: 3px;
+      }
       .footer {
         font-size: 0.8rem;
         color: #aaa;
@@ -229,110 +293,187 @@
 
         <div class="chart-container">
           <div class="stat-group">
-            <h3>Statistiques sur les 12 derniers mois</h3>
-            <div id="box-mois"></div>
+            <h3 style="text-align: center;">Statistiques sur les 12 derniers mois</h3>
+            <div id="box-mois" class="chart-wrapper"></div>
           </div>
-      
+        </div>
+
+        <div class="actions">
+          <button id="download-csv-of-day" class="btn btn-csv">
+            📥 Exporter les données brutes du jour (CSV)
+          </button>
+        </div>
+
+        <div class="actions">
+          <button id="download-csv-stats" class="btn btn-csv">
+            📥 Exporter les données stats (CSV)
+          </button>
+          <a href="/" class="btn btn-back">Retour à l'accueil</a>
+        </div>
+
+
+        <div class="footer">
+          Dernier signal reçu le : <br />
+          <strong id="last-activity">...</strong>
+        </div>
       </div>
 
-      <div class="actions">
-        <button id="download-csv" class="btn btn-csv">
-          📥 Exporter les données brutes (CSV)
-        </button>
-        <a href="/" class="btn btn-back">Retour à l'accueil</a>
-      </div>
+      <script>
+        const sheetCSVUrl =
+          "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=155932398&single=true&output=csv";
 
-      <div class="footer">
-        Dernier signal reçu le : <br />
-        <strong id="last-activity">...</strong>
-      </div>
-    </div>
+        const sheetCsvStat =
+          "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=748834337&single=true&output=csv";
 
-    <script>
-      const sheetCSVUrl =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=155932398&single=true&output=csv";
+        function dessinerGraphiqueMensuel(currentStats) {
+          const container = document.getElementById("box-mois");
+          if (!container) return;
 
-      const sheetCsvStat =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vRd1LY9yXqB_P-bTKCWnD0kdUfXh4WTXLrDTB0XcrcB9gCoVXa19cBElkyq_4Ralhpbc7_VODSGOIBZ/pub?gid=748834337&single=true&output=csv";
+          // 1. Extraction des 12 lignes de mois
+          const monthlyData = currentStats.map((row) => {
+            return {
+              nom: row[0],
+              fr: parseInt(row[1]) || 0,
+              en: parseInt(row[2]) || 0,
+            };
+          });
 
-      async function initStats() {
-        try {
-          const responseCurrent = await fetch(
-            sheetCSVUrl + "&nocache=" + Date.now()
-          );
-          const data = await responseCurrent.text();
-          const currentLines = data.split("\n").filter((l) => l.trim() !== "");
+          console.table(monthlyData);
 
-          const responseStats = await fetch(
-            sheetCsvStat + "&nocache=" + Date.now()
-          );
-          const data2 = await responseStats.text();
-          const currentStats = data2.split("\n").filter((l) => l.trim() !== "");
+          // 2. Trouver la valeur max pour l'échelle (pour que la plus haute barre fasse 100%)
+          const allValues = monthlyData.flatMap((d) => [d.fr, d.en]);
+          const maxValue = Math.max(...allValues, 1); // Évite la division par 0
 
-          console.table(currentLines);
-          console.table(currentStats);
+          // 3. Génération du HTML
+          container.innerHTML = monthlyData
+            .map((month) => {
+              const heightFR = (month.fr / maxValue) * 100;
+              const heightEN = (month.en / maxValue) * 100;
 
-          let cumulTotalFR = 0;
-          let cumulTotalEN = 0;
-          let lastDate = "---";
+              return `
+          <div class="month-column">
+            <div class="bars-container">
+              <div class="v-bar fr" style="height: ${heightFR}%" data-value="${month.fr}"></div>
+              <div class="v-bar en" style="height: ${heightEN}%" data-value="${month.en}"></div>
+            </div>
+            <span class="month-label">${month.nom}</span>
+          </div>
+        `;
+            })
+            .join("");
+        }
 
-          // --- ÉTAPE 1 : RÉCUPÉRER LE CUMUL (stats) ---
-          const statsFirstLine = currentStats[1].split(",");
-          // On suppose que le chiffre FR est en colonne 7 et EN en colonne 8
-          cumulTotalFR = parseInt(statsFirstLine[3]) || 0;
-          cumulTotalEN = parseInt(statsFirstLine[4]) || 0;
+        function arrayRotate(arr, reverse) {
+          if (reverse) arr.unshift(arr.pop());
+          else arr.push(arr.shift());
+          return arr;
+        }
 
-          let totalFR = cumulTotalFR;
-          let totalEN = cumulTotalEN;
+        async function initStats() {
+          try {
+            const responseCurrent = await fetch(
+              sheetCSVUrl + "&nocache=" + Date.now()
+            );
+            const data = await responseCurrent.text();
+            const currentLines = data
+              .split("\n")
+              .filter((l) => l.trim() !== "");
 
-          // data-event start at number line d'index 2
-          if (currentLines.length > 1) {
-            // --- ÉTAPE 2 : RÉCUPÉRER LES EVTS DU JOUR NON ENCORE CUMULES DANS stats ---
-            for (let i = 2; i < currentLines.length; i++) {
-              if (currentLines[i].includes("dl_fr")) totalFR++;
-              if (currentLines[i].includes("dl_en")) totalEN++;
-              if (i === currentLines.length - 1) {
-                lastDate = currentLines[i].split(",")[0];
+            const responseStats = await fetch(
+              sheetCsvStat + "&nocache=" + Date.now()
+            );
+            const data2 = await responseStats.text();
+            const currentStats = data2
+              .split("\n")
+              .filter((l) => l.trim() !== "");
+
+            console.table(currentLines);
+            console.table(currentStats);
+
+            let cumulTotalFR = 0;
+            let cumulTotalEN = 0;
+            let lastDate = "---";
+
+            // --- ÉTAPE 1 : RÉCUPÉRER LE CUMUL (stats) ---
+            const statsFirstLine = currentStats[1].split(",");
+            // On suppose que le chiffre FR est en colonne 7 et EN en colonne 8
+            cumulTotalFR = parseInt(statsFirstLine[3]) || 0;
+            cumulTotalEN = parseInt(statsFirstLine[4]) || 0;
+
+            let totalFR = cumulTotalFR;
+            let totalEN = cumulTotalEN;
+
+            // data-event start at number line d'index 2
+            if (currentLines.length > 1) {
+              // --- ÉTAPE 2 : RÉCUPÉRER LES EVTS DU JOUR NON ENCORE CUMULES DANS stats ---
+              for (let i = 2; i < currentLines.length; i++) {
+                if (currentLines[i].includes("dl_fr")) totalFR++;
+                if (currentLines[i].includes("dl_en")) totalEN++;
+                if (i === currentLines.length - 1) {
+                  lastDate = currentLines[i].split(",")[0];
+                }
               }
             }
+            const total = totalFR + totalEN;
+            const pFr = total > 0 ? Math.round((totalFR / total) * 100) : 0;
+            const pEn = total > 0 ? Math.round((totalEN / total) * 100) : 0;
+
+            // Transition visuelle
+            document.getElementById("loader-container").style.display = "none";
+            const content = document.getElementById("stats-content");
+            content.style.display = "block";
+
+            // Maj data
+            document.getElementById("count-fr").innerText = totalFR;
+            document.getElementById("count-en").innerText = totalEN;
+            document.getElementById("total").innerText = total;
+            document.getElementById("last-activity").innerText = lastDate;
+
+            // Animation barres
+            setTimeout(() => {
+              document.getElementById("fill-fr").style.width = pFr + "%";
+              document.getElementById("fill-en").style.width = pEn + "%";
+              document.getElementById("perc-fr").innerText = pFr + "%";
+              document.getElementById("perc-en").innerText = pEn + "%";
+            }, 200);
+
+            const leMois = new Date().getMonth();
+            let rotatedCurrentStats = currentStats.slice(2); // supprime les 2 premières lignes
+            for (let i = 0; i < leMois; i++) {
+              rotatedCurrentStats = arrayRotate(rotatedCurrentStats);
+            }
+
+            // transforme le tableau de string en tableau de tableaux
+            rotatedCurrentStats = rotatedCurrentStats.map(
+              (row) => {
+                return row.split(",");
+              }
+            );
+
+            dessinerGraphiqueMensuel(rotatedCurrentStats);
+          } catch (e) {
+            document.getElementById("loader-text").innerText =
+              "Erreur de synchronisation.";
+            console.error(e);
           }
-          const total = totalFR + totalEN;
-          const pFr = total > 0 ? Math.round((totalFR / total) * 100) : 0;
-          const pEn = total > 0 ? Math.round((totalEN / total) * 100) : 0;
-
-          // Transition visuelle
-          document.getElementById("loader-container").style.display = "none";
-          const content = document.getElementById("stats-content");
-          content.style.display = "block";
-
-          // Maj data
-          document.getElementById("count-fr").innerText = totalFR;
-          document.getElementById("count-en").innerText = totalEN;
-          document.getElementById("total").innerText = total;
-          document.getElementById("last-activity").innerText = lastDate;
-
-          // Animation barres
-          setTimeout(() => {
-            document.getElementById("fill-fr").style.width = pFr + "%";
-            document.getElementById("fill-en").style.width = pEn + "%";
-            document.getElementById("perc-fr").innerText = pFr + "%";
-            document.getElementById("perc-en").innerText = pEn + "%";
-          }, 200);
-        } catch (e) {
-          document.getElementById("loader-text").innerText =
-            "Erreur de synchronisation.";
-          console.error(e);
         }
-      }
 
-      document.getElementById("download-csv").onclick = () => {
-        const a = document.createElement("a");
-        a.href = sheetCSVUrl;
-        a.download = "stats.csv";
-        a.click();
-      };
+        document.getElementById("download-csv-of-day").onclick = () => {
+          const a = document.createElement("a");
+          a.href = sheetCSVUrl;
+          a.download = "stats-du-jour.csv";
+          a.click();
+        };
 
-      initStats();
-    </script>
+        document.getElementById("download-csv-stats").onclick = () => {
+          const a = document.createElement("a");
+          a.href = sheetCsvStat;
+          a.download = "stats.csv";
+          a.click();
+        };
+
+        initStats();
+      </script>
+    </div>
   </body>
 </html>
