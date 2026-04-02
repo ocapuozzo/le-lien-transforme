@@ -437,6 +437,7 @@
               document.getElementById("perc-en").innerText = pEn + "%";
             }, 200);
 
+            // placer le mois en cours à l'extreme droite
             const leMois = new Date().getMonth();
             let rotatedCurrentStats = currentStats.slice(2); // supprime les 2 premières lignes
             for (let i = 0; i < leMois; i++) {
