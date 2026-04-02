@@ -287,11 +287,8 @@
 
           // data-event start at number line d'index 2
           if (currentLines.length > 1) {
-            // lastDate = cumulLine[16][0]; // Date de la dernière archive
-
             // --- ÉTAPE 2 : RÉCUPÉRER LES EVTS DU JOUR NON ENCORE CUMULES DANS stats ---
-            // console.table(lines) line[i] n'est pas un tableau
-            for (let i = 15; i < currentLines.length; i++) {
+            for (let i = 2; i < currentLines.length; i++) {
               if (currentLines[i].includes("dl_fr")) totalFR++;
               if (currentLines[i].includes("dl_en")) totalEN++;
               if (i === currentLines.length - 1) {
