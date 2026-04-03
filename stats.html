@@ -253,7 +253,7 @@
     <h1>Données du Lien Transformé</h1>
 
     <div id="loader-container">
-      <div class="spinner"></div>
+      <div class="spinner" id="waiting-spinner"></div>
       <p id="loader-text">Analyse des flux...</p>
     </div>
 
@@ -271,6 +271,14 @@
           <h3>Total des consultations</h3>
           <div class="value" id="total">0</div>
         </div>
+        <div class="card full">
+          <h3>Dont total des consultations du jour</h3>
+          <div>
+            <span>FR : </span><span id="total-fr-of-the-day">0</span>
+            <span style="padding-left: 25px;">EN : </span><span id="total-en-of-the-day">0</span>
+          </div>
+        </div>
+        
       </div>
 
       <div class="chart-container">
@@ -396,17 +404,17 @@
 
             // --- ÉTAPE 1 : RÉCUPÉRER LE CUMUL (stats) ---
             const statsFirstLine = currentStats[1].split(",");
-            // On suppose que le chiffre FR est en colonne 7 et EN en colonne 8
+            // On suppose que le chiffre FR est en colonne 3 et EN en colonne 4
             cumulTotalFR = parseInt(statsFirstLine[3]) || 0;
             cumulTotalEN = parseInt(statsFirstLine[4]) || 0;
 
-            let totalFR = cumulTotalFR;
-            let totalEN = cumulTotalEN;
+            let totalFR = 0;
+            let totalEN = 0;
 
             // data-event start at number line d'index 2
             if (currentLines.length > 1) {
               // --- ÉTAPE 2 : RÉCUPÉRER LES EVTS DU JOUR NON ENCORE CUMULES DANS stats ---
-              for (let i = 2; i < currentLines.length; i++) {
+              for (let i = 1; i < currentLines.length; i++) {
                 if (currentLines[i].includes("dl_fr")) totalFR++;
                 if (currentLines[i].includes("dl_en")) totalEN++;
                 if (i === currentLines.length - 1) {
@@ -414,6 +422,12 @@
                 }
               }
             }
+
+            const dayTotalFR = totalFR;
+            const dayTotalEN = totalEN;
+
+            totalFR += cumulTotalFR;
+            totalEN += cumulTotalEN;
             const total = totalFR + totalEN;
             const pFr = total > 0 ? Math.round((totalFR / total) * 100) : 0;
             const pEn = total > 0 ? Math.round((totalEN / total) * 100) : 0;
@@ -428,6 +442,8 @@
             document.getElementById("count-en").innerText = totalEN;
             document.getElementById("total").innerText = total;
             document.getElementById("last-activity").innerText = lastDate;
+            document.getElementById("total-fr-of-the-day").innerText = dayTotalFR;
+            document.getElementById("total-en-of-the-day").innerText = dayTotalEN;
 
             // Animation barres
             setTimeout(() => {
@@ -450,9 +466,10 @@
                 return row.split(",");
               }
             );
-
             dessinerGraphiqueMensuel(rotatedCurrentStats);
+
           } catch (e) {
+            document.getElementById("waiting-spinner").style.display = "none";
             document.getElementById("loader-text").innerText =
               "Erreur de synchronisation.";
             console.error(e);
