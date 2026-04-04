@@ -86,10 +86,22 @@
         text-transform: uppercase;
         letter-spacing: 1px;
       }
+      .card h4 {
+        margin: 0;
+        font-size: 0.5rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
       .card .value {
         font-size: 2.2rem;
         font-weight: 700;
         margin: 10px 0;
+        color: var(--primary-color);
+      }
+      .stats-day {
+        font-size: 0.8rem;
+        margin: 5px 0;
         color: var(--primary-color);
       }
 
@@ -271,9 +283,9 @@
           <h3>Total des consultations</h3>
           <div class="value" id="total">0</div>
         </div>
-        <div class="card full">
-          <h3>Dont total des consultations du jour</h3>
-          <div>
+        <div class="card full" id="consult-day">
+          <h4>Dont total des consultations du jour</h4>
+          <div class="stats-day">
             <span>FR : </span><span id="total-fr-of-the-day">0</span>
             <span style="padding-left: 25px;">EN : </span><span id="total-en-of-the-day">0</span>
           </div>
@@ -442,9 +454,13 @@
             document.getElementById("count-en").innerText = totalEN;
             document.getElementById("total").innerText = total;
             document.getElementById("last-activity").innerText = lastDate;
-            document.getElementById("total-fr-of-the-day").innerText = dayTotalFR;
-            document.getElementById("total-en-of-the-day").innerText = dayTotalEN;
-
+            if ( (dayTotalFR + dayTotalEN) > 0) {
+              document.getElementById("total-fr-of-the-day").innerText = dayTotalFR;
+              document.getElementById("total-en-of-the-day").innerText = dayTotalEN;
+            } else {
+              document.getElementById("consult-day").style.display = "none";
+            }
+            
             // Animation barres
             setTimeout(() => {
               document.getElementById("fill-fr").style.width = pFr + "%";
@@ -452,6 +468,8 @@
               document.getElementById("perc-fr").innerText = pFr + "%";
               document.getElementById("perc-en").innerText = pEn + "%";
             }, 200);
+
+
 
             // placer le mois en cours à l'extreme droite
             const leMois = new Date().getMonth();
